@@ -74,6 +74,7 @@ export class HealthComponent implements OnInit {
     public getStatus(timestamp: string, hasVersion, firmwareVersion, tmoFormsVersion, tmoFirmwareVersion){
         var status = 'Green';
         var dataDate  = new Date(timestamp);
+        var allowedCmp = [1,0]; 
         var threeDayFromCurrentDate = new Date();
         threeDayFromCurrentDate.setDate( threeDayFromCurrentDate.getDate() + 3 );
         
@@ -81,13 +82,39 @@ export class HealthComponent implements OnInit {
             status = 'Red';
         }
 
-        if (parseInt(hasVersion) >= config.hasVersion &&
-            parseInt(firmwareVersion) >= config.firmwareVersion && 
-            parseInt(tmoFormsVersion) >= config.tmoFormsVersion &&
-            parseInt(tmoFirmwareVersion) >= config.tmoFirmwareVersion) {
+        // Need to allow both if api returning value of version is greater or equal
+        if (allowedCmp.indexOf(this.cmpVersions(hasVersion, config.hasVersion)) &&
+            allowedCmp.indexOf(this.cmpVersions(firmwareVersion, config.firmwareVersion)) && 
+            allowedCmp.indexOf(this.cmpVersions(tmoFormsVersion, config.tmoFormsVersion)) &&
+            allowedCmp.indexOf(this.cmpVersions(tmoFirmwareVersion, config.tmoFirmwareVersion))) {
             status = 'Orange';
         }
 
         return status;
+    }
+
+    /**
+     * Comaprison function
+     * @param a 
+     * @param b 
+     * a > b returns 1
+     * a = b returns 0
+     * a < b returns any negative value
+     * a or b can be of any length
+     */
+    public cmpVersions (a, b) {
+        var i, diff;
+        var regExStrip0 = /(\.0+)+$/;
+        var segmentsA = a.replace(regExStrip0, '').split('.');
+        var segmentsB = b.replace(regExStrip0, '').split('.');
+        var l = Math.min(segmentsA.length, segmentsB.length);
+    
+        for (i = 0; i < l; i++) {
+            diff = parseInt(segmentsA[i], 10) - parseInt(segmentsB[i], 10);
+            if (diff) {
+                return diff;
+            }
+        }
+        return segmentsA.length - segmentsB.length;
     }
 }
